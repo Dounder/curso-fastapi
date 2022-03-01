@@ -18,30 +18,54 @@ class HairColor(Enum):
     red = 'red'
 
 
+class Location(BaseModel):
+    city: str = Field(..., example='Guatemala')
+    state: str = Field(..., example='Guatemala')
+    country: str = Field(..., example='GT')
+
+    # class Config:
+    #     schema_extra = {
+    #         "example": {
+    #             "city": "San Francisco",
+    #             "state": "California",
+    #             "country": "USA"
+    #         }
+    #     }
+
+
 class Person(BaseModel):
     first_name: str = Field(
         ...,
         min_length=1,
-        max_length=50
+        max_length=50,
+        example='Douglas'
     )
     last_name: str = Field(
         ...,
         min_length=1,
-        max_length=50
+        max_length=50,
+        example='Ramirez'
     )
     age: int = Field(
         ...,
         gt=0,
-        lt=115
+        lt=115,
+        example=21
     )
-    hair_color: Optional[HairColor] = Field(default=None)
-    is_married: Optional[bool] = Field(default=None)
+    hair_color: Optional[HairColor] = Field(default=None, example='black')
+    is_married: Optional[bool] = Field(default=None, example=False)
 
+    # class Config:
+    #     schema_extra = {
+    #         "example": {
+    #             "first_name": "Fulano",
+    #             "last_name": "Pérez",
+    #             "age": "40",
+    #             "hair_color": "black",
+    #             "is_married": True
+    #         }
 
-class Location(BaseModel):
-    city: str
-    state: str
-    country: str
+    #     }
 
 
 @app.get("/")  # Path Operator Decoration.
@@ -63,12 +87,14 @@ def show_person(
         min_length=1,
         max_length=50,
         title='Person name',
-        description='This is the person name. It\'s between 1 and 50 characters'
+        description='This is the person name. It\'s between 1 and 50 characters',
+        example='Juan'
     ),
     age: str = Query(
         ...,
         title='Person age',
-        description='This is the person name. It\'s required'
+        description='This is the person name. It\'s required',
+        example=30
     ),
 ):
     return {name: age}
@@ -81,7 +107,8 @@ def show_person(
         ...,
         gt=0,
         title='Person id',
-        description='This is the person id. It\'s required and value is greater than 0'
+        description='This is the person id. It\'s required and value is greater than 0',
+        example=123
     )
 ):
     return {person_id: 'it exists'}
@@ -94,7 +121,8 @@ def update_person(
         ...,
         title='Person Id',
         description='This is the person id',
-        gt=0
+        gt=0,
+        example=123
     ),
     person: Person = Body(...),
     location: Location = Body(...),
