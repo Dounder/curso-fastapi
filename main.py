@@ -2,9 +2,9 @@
 from enum import Enum
 from typing import Dict, Optional
 # Pydantic
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 # FastApi
-from fastapi import FastAPI, Body, Path, Query
+from fastapi import FastAPI, Body, Form, Path, Query, status
 
 #  Instancia de la clase.
 app: FastAPI = FastAPI()
@@ -23,64 +23,43 @@ class Location(BaseModel):
     state: str = Field(..., example='Guatemala')
     country: str = Field(..., example='GT')
 
-    # class Config:
-    #     schema_extra = {
-    #         "example": {
-    #             "city": "San Francisco",
-    #             "state": "California",
-    #             "country": "USA"
-    #         }
-    #     }
-
 
 class Person(BaseModel):
-    first_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example='Douglas'
-    )
-    last_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example='Ramirez'
-    )
-    age: int = Field(
-        ...,
-        gt=0,
-        lt=115,
-        example=21
-    )
+    first_name: str = Field(..., min_length=1, max_length=50, example='Alex')
+    last_name: str = Field(..., min_length=1, max_length=50, example='Ramirez')
+    age: int = Field(..., gt=0, lt=115, example=21)
     hair_color: Optional[HairColor] = Field(default=None, example='black')
     is_married: Optional[bool] = Field(default=None, example=False)
-
-    # class Config:
-    #     schema_extra = {
-    #         "example": {
-    #             "first_name": "Fulano",
-    #             "last_name": "Pérez",
-    #             "age": "40",
-    #             "hair_color": "black",
-    #             "is_married": True
-    #         }
-
-    #     }
+    password: SecretStr = Field(..., min_length=8, example='12345678')
 
 
-@app.get("/")  # Path Operator Decoration.
+class Login(BaseModel):
+    username: str = Field(..., min_length=1, max_length=50)
+    password: SecretStr = Field(..., min_length=8)
+    message: str = Field(
+        default='Login successful :3',
+        description='User loged in'
+    )
+
+
+@app.get("/", status_code=status.HTTP_200_OK)  # Path Operator Decoration.
 def home() -> Dict:  # Path operator function
     return {"Hello": "World"}  # Return JSON.
 
 
 # Request and Response body
-@app.post('/person/new')
+@app.post(
+    '/person/new',
+    response_model=Person,
+    response_model_exclude={'password'},
+    status_code=status.HTTP_201_CREATED
+)
 def create_person(person: Person = Body(...)):
     return person
 
 
 # Validaciones query parameters
-@app.get('/person/detail')
+@app.get('/person/detail', status_code=status.HTTP_200_OK)
 def show_person(
     name: Optional[str] = Query(
         None,
@@ -130,3 +109,13 @@ def update_person(
     result = person.dict()
     result.update(location.dict())
     return result
+
+
+@app.post(
+    path='/login',
+    response_model=Login,
+    response_model_exclude={'password'},
+    status_code=status.HTTP_200_OK
+)
+def login(username: str = Form(...), password: str = Form(...)):
+    return Login(username=username, password=password)
