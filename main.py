@@ -17,6 +17,12 @@ class Person(BaseModel):
     is_married: Optional[bool] = None
 
 
+class Location(BaseModel):
+    city: str
+    state: str
+    country: str
+
+
 @app.get("/")  # Path Operator Decoration.
 def home() -> Dict:  # Path operator function
     return {"Hello": "World"}  # Return JSON.
@@ -58,3 +64,20 @@ def show_person(
     )
 ):
     return {person_id: 'it exists'}
+
+
+# Validaciones: Request body
+@app.put('/person/{person_id}')
+def update_person(
+    person_id: int = Path(
+        ...,
+        title='Person Id',
+        description='This is the person id',
+        gt=0
+    ),
+    person: Person = Body(...),
+    location: Location = Body(...),
+):
+    result = person.dict()
+    result.update(location.dict())
+    return result
